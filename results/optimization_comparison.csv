@@ -1,0 +1,3 @@
+scenario,objective_value_eur,fuel_cost_eur,startup_cost_eur,unmet_energy_mwh,curtailed_renewable_mwh,battery_charge_mwh,battery_discharge_mwh,savings_vs_without_battery_pct
+without_battery,1776151376.5428119,302332984.1260828,1736000.0,147208.23924167306,0.0,0.0,0.0,0.0
+with_battery,1490298921.6920972,303430200.64406264,1675999.9999999988,118519.27210480343,0.0,53490.04810775127,48141.04329697607,16.09392412301658

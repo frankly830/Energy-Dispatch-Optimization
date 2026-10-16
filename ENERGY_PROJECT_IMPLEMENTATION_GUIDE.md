@@ -21,7 +21,7 @@ python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install required libraries
-pip install pandas numpy matplotlib scipy ortools
+pip install pandas numpy matplotlib scipy
 ```
 
 **Step 2: Create Project Structure**
@@ -729,135 +729,11 @@ if __name__ == '__main__':
 
 ### Step 12: Formulate as Linear Optimization Problem
 
-Create `optimizer.py`:
-
-```python
-from ortools.linear_solver import pywraplp
-import pandas as pd
-import numpy as np
-
-class OptimizedDispatch:
-    """Optimize dispatch using linear programming."""
-    
-    def __init__(self, grid, demand, renewable_gen, hours=8760):
-        self.grid = grid
-        self.demand = demand
-        self.renewable_gen = renewable_gen
-        self.hours = hours
-        self.solver = pywraplp.Solver.CreateSolver('SCIP')
-        
-        if not self.solver:
-            raise RuntimeError("Solver not available")
-        
-        self.results = None
-    
-    def optimize(self):
-        """Solve the unit commitment problem."""
-        
-        print("Setting up optimization problem...")
-        
-        # Decision variables
-        # output[h][g] = generation of generator g in hour h
-        output = {}
-        # status[h][g] = 1 if generator g is on in hour h, 0 otherwise
-        status = {}
-        
-        infinity = self.solver.infinity()
-        
-        for h in range(self.hours):
-            for g_idx, gen in enumerate(self.grid.generators):
-                # Generation must be between 0 and capacity
-                output[h, g_idx] = self.solver.NumVar(
-                    0, gen.capacity, f'output_h{h}_g{g_idx}'
-                )
-                # Binary status variable
-                status[h, g_idx] = self.solver.IntVar(
-                    0, 1, f'status_h{h}_g{g_idx}'
-                )
-        
-        print("Adding constraints...")
-        
-        # Constraints
-        for h in range(self.hours):
-            # Demand must be met (with some slack for unmet demand)
-            generation_sum = 0
-            for g_idx in range(len(self.grid.generators)):
-                generation_sum += output[h, g_idx]
-            
-            renewable_available = self.renewable_gen[h]
-            demand = self.demand[h]
-            needed = demand - renewable_available
-            
-            self.solver.Add(generation_sum >= max(0, needed * 0.95))  # Allow 5% unmet
-            self.solver.Add(generation_sum <= max(0, needed) + 100)   # Don't overproduce
-            
-            # Generator must be within min/max output
-            for g_idx, gen in enumerate(self.grid.generators):
-                # If on, must be at least min_output
-                self.solver.Add(
-                    output[h, g_idx] >= gen.min_output * status[h, g_idx]
-                )
-                # Cannot exceed capacity
-                self.solver.Add(output[h, g_idx] <= gen.capacity)
-        
-        print("Setting objective function...")
-        
-        # Objective: Minimize total cost
-        objective = 0
-        
-        for h in range(self.hours):
-            for g_idx, gen in enumerate(self.grid.generators):
-                # Fuel cost
-                objective += output[h, g_idx] * gen.fuel_cost
-                
-                # Startup cost (if turning on)
-                if h > 0:
-                    # This is simplified: assume turning on costs startup_cost
-                    # In reality, you'd track state transitions
-                    objective += (status[h, g_idx] * gen.startup_cost) / 1000  # Scale down
-        
-        self.solver.Minimize(objective)
-        
-        print("Solving...")
-        status_code = self.solver.Solve()
-        
-        if status_code == pywraplp.Solver.OPTIMAL:
-            print(f"Optimal solution found! Cost: ${self.solver.ObjectiveValue():,.0f}")
-            self._store_results(output, status)
-            return True
-        else:
-            print("Optimization did not find optimal solution.")
-            return False
-    
-    def _store_results(self, output, status):
-        """Extract and store optimization results."""
-        
-        self.results = {
-            'output': {},
-            'status': {},
-            'total_cost': self.solver.ObjectiveValue()
-        }
-        
-        for h in range(self.hours):
-            for g_idx in range(len(self.grid.generators)):
-                self.results['output'][h, g_idx] = output[h, g_idx].solution_value()
-                self.results['status'][h, g_idx] = int(status[h, g_idx].solution_value())
-    
-    def get_dispatch_schedule(self):
-        """Return optimized dispatch as dataframe."""
-        
-        if self.results is None:
-            return None
-        
-        schedule = []
-        for h in range(self.hours):
-            row = {'hour': h}
-            for g_idx, gen in enumerate(self.grid.generators):
-                row[f'{gen.name}_mw'] = self.results['output'][h, g_idx]
-            schedule.append(row)
-        
-        return pd.DataFrame(schedule)
-```
+The current `optimizer.py` uses `scipy.optimize.milp` with sparse linear
+constraints. It decides hourly generator output and on/off status, charges
+startup costs, and represents unmet demand and renewable curtailment explicitly.
+Use the implementation in the project root as the source of truth; this guide's
+original OR-Tools example has been superseded.
 
 **Step 13: Compare Baseline vs. Optimized**
 
@@ -1064,7 +940,7 @@ energy-dispatch-optimization/
 
 1. **Install dependencies**:
 ```bash
-pip install pandas numpy matplotlib scipy ortools
+pip install pandas numpy matplotlib scipy
 ```
 
 2. **Generate or load data**:

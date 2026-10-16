@@ -26,7 +26,7 @@ source .venv/bin/activate
 Install the required packages:
 
 ```bash
-python -m pip install pandas numpy matplotlib scipy ortools
+python -m pip install pandas numpy matplotlib scipy
 ```
 
 ## Run
@@ -38,5 +38,19 @@ python main.py
 ```
 
 The script reads hourly demand, wind, and solar profiles from `data/`, runs
-baseline and optimized dispatch, and writes the optimized schedule to
-`results/optimized_dispatch.csv`.
+baseline dispatch and optimizations with and without battery storage, and
+writes schedules to `results/optimized_dispatch.csv` and
+`results/optimized_dispatch_with_battery.csv`. The side-by-side objective
+value, fuel/startup costs, unserved energy, curtailment, and battery-use
+metrics are saved in `results/optimization_comparison.csv`. The objective
+value includes the optimizer's €10,000/MWh penalty for unmet demand, so it
+should be read alongside the unserved-energy column.
+
+The baseline simulator charges the battery from generation that would
+otherwise be surplus, discharges it to help meet demand before dispatching
+conventional generators, and records charge, discharge, and stored energy in
+`results/baseline_dispatch.csv`.
+
+## Optimizer structure
+
+![Diagram of the SciPy dispatch optimizer](figures/optimizer_structure.svg)

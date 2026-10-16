@@ -9,6 +9,10 @@ def plot_baseline_results(results_df, save_path='figures/baseline_results.png'):
     fig, axes = plt.subplots(3, 1, figsize=(14, 10))
 
     week_hours = slice(0, 7 * 24)
+    battery_discharge = results_df.get(
+        'battery_discharge_mw', pd.Series(0.0, index=results_df.index)
+    )
+    battery_discharge_week = battery_discharge.iloc[week_hours]
 
     axes[0].plot(
         results_df['datetime'].iloc[week_hours],
@@ -28,7 +32,17 @@ def plot_baseline_results(results_df, save_path='figures/baseline_results.png'):
     axes[0].fill_between(
         results_df['datetime'].iloc[week_hours],
         results_df['renewable_mw'].iloc[week_hours],
-        results_df['renewable_mw'].iloc[week_hours] + results_df['traditional_mw'].iloc[week_hours],
+        results_df['renewable_mw'].iloc[week_hours] + battery_discharge_week,
+        label='Battery discharge',
+        color='purple',
+        alpha=0.6,
+    )
+    axes[0].fill_between(
+        results_df['datetime'].iloc[week_hours],
+        results_df['renewable_mw'].iloc[week_hours] + battery_discharge_week,
+        results_df['renewable_mw'].iloc[week_hours]
+        + battery_discharge_week
+        + results_df['traditional_mw'].iloc[week_hours],
         label='Traditional',
         color='orange',
         alpha=0.6,
@@ -50,6 +64,13 @@ def plot_baseline_results(results_df, save_path='figures/baseline_results.png'):
         results_df['traditional_mw'].iloc[::24].rolling(7).mean(),
         label='Traditional (7-day avg)',
         color='orange',
+        linewidth=2,
+    )
+    axes[1].plot(
+        results_df['datetime'].iloc[::24],
+        battery_discharge.iloc[::24].rolling(7).mean(),
+        label='Battery discharge (7-day avg)',
+        color='purple',
         linewidth=2,
     )
     axes[1].set_ylabel('Generation (MW)')
@@ -90,6 +111,9 @@ def plot_comparison(baseline_df, optimized_df, save_path='figures/comparison.png
     optimized_df = optimized_df.copy()
     baseline_df['datetime'] = pd.to_datetime(baseline_df['datetime'])
     optimized_df['datetime'] = pd.to_datetime(optimized_df['datetime'])
+    baseline_battery_discharge = baseline_df.get(
+        'battery_discharge_mw', pd.Series(0.0, index=baseline_df.index)
+    )
 
     week = slice(0, 7 * 24)
     baseline_week = baseline_df.iloc[week]
@@ -125,7 +149,17 @@ def plot_comparison(baseline_df, optimized_df, save_path='figures/comparison.png
     axes[0, 0].fill_between(
         baseline_week['datetime'],
         baseline_week['renewable_mw'],
-        baseline_week['renewable_mw'] + baseline_week['traditional_mw'],
+        baseline_week['renewable_mw'] + baseline_battery_discharge.iloc[week],
+        label='Battery discharge',
+        color='purple',
+        alpha=0.5,
+    )
+    axes[0, 0].fill_between(
+        baseline_week['datetime'],
+        baseline_week['renewable_mw'] + baseline_battery_discharge.iloc[week],
+        baseline_week['renewable_mw']
+        + baseline_battery_discharge.iloc[week]
+        + baseline_week['traditional_mw'],
         label='Traditional',
         color='orange',
         alpha=0.5,

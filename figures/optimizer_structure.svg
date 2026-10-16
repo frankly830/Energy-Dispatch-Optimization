@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Energy dispatch optimizer structure</title>
+  <desc id="desc">Hourly demand, renewable generation, and generator data feed a SciPy mixed integer linear program. The solver selects generation, commitment, startup, unmet demand, and renewable curtailment, then produces a dispatch schedule and cost.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#526581"/></marker>
+    <style>
+      .bg{fill:#f5f7fb}.box{fill:#fff;stroke:#9aabc2;stroke-width:2;rx:14}.input{fill:#eaf3ff;stroke:#6a95ce}.solver{fill:#e8f6ef;stroke:#4a9b70}.output{fill:#fff4df;stroke:#d99b32}.title{font:700 28px Arial,sans-serif;fill:#17263c}.head{font:700 18px Arial,sans-serif;fill:#17263c}.txt{font:15px Arial,sans-serif;fill:#35465e}.small{font:13px Arial,sans-serif;fill:#53647c}.arrow{stroke:#526581;stroke-width:2.5;fill:none;marker-end:url(#arrow)}.line{stroke:#9aabc2;stroke-width:1.5}
+    </style>
+  </defs>
+  <rect class="bg" width="1200" height="720"/>
+  <text class="title" x="48" y="52">Energy Dispatch Optimizer · Structure</text>
+
+  <rect class="box input" x="48" y="104" width="300" height="140"/>
+  <text class="head" x="72" y="137">Hourly inputs</text>
+  <text class="txt" x="72" y="169">Demand (MW)</text>
+  <text class="txt" x="72" y="194">Wind + solar availability (MW)</text>
+  <text class="txt" x="72" y="219">Generator limits and cost data</text>
+
+  <rect class="box input" x="48" y="292" width="300" height="124"/>
+  <text class="head" x="72" y="325">Indexing and arrays</text>
+  <text class="txt" x="72" y="357">NumPy vectors for each hour</text>
+  <text class="txt" x="72" y="382">Sparse matrix rows for constraints</text>
+
+  <path class="arrow" d="M198 244 V286"/>
+  <path class="arrow" d="M348 354 H400"/>
+
+  <rect class="box solver" x="410" y="104" width="430" height="480"/>
+  <text class="head" x="438" y="139">SciPy MILP · scipy.optimize.milp</text>
+  <text class="small" x="438" y="166">Decision variables, repeated for each hour h and generator g</text>
+  <rect class="box" x="438" y="185" width="374" height="112"/>
+  <text class="txt" x="458" y="214">Generation output[h,g] · continuous</text>
+  <text class="txt" x="458" y="240">On/off status[h,g] · binary</text>
+  <text class="txt" x="458" y="266">Startup[h,g] · binary</text>
+  <text class="txt" x="438" y="327">System variables</text>
+  <text class="txt" x="458" y="354">Unmet demand[h] · continuous</text>
+  <text class="txt" x="458" y="380">Renewable curtailment[h] · continuous</text>
+  <path class="line" d="M438 402 H812"/>
+  <text class="txt" x="438" y="431">Constraints</text>
+  <text class="small" x="458" y="456">Power balance · output bounds · status/startup logic</text>
+  <path class="line" d="M438 474 H812"/>
+  <text class="txt" x="438" y="503">Minimize total operating cost</text>
+  <text class="small" x="458" y="528">Fuel + startup + penalty for unmet demand</text>
+  <text class="small" x="458" y="553">Curtailment is bounded by renewable availability</text>
+
+  <path class="arrow" d="M840 344 H892"/>
+  <rect class="box output" x="902" y="194" width="250" height="286"/>
+  <text class="head" x="928" y="229">Solver result</text>
+  <text class="txt" x="928" y="269">Optimized hourly output</text>
+  <text class="txt" x="928" y="297">Generator status and startups</text>
+  <text class="txt" x="928" y="325">Unmet demand and curtailment</text>
+  <path class="line" d="M928 347 H1126"/>
+  <text class="txt" x="928" y="379">Total cost</text>
+  <text class="txt" x="928" y="419">DataFrame schedule</text>
+  <text class="small" x="928" y="447">results/optimized_dispatch.csv</text>
+
+  <rect class="box" x="410" y="620" width="742" height="54"/>
+  <text class="small" x="438" y="653">Current model does not constrain ramp rates, minimum up/down times, or battery charge/discharge.</text>
+</svg>

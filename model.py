@@ -87,29 +87,38 @@ class EnergyStorage:
         self.capacity = capacity
         self.max_charge_rate = max_charge_rate
         self.max_discharge_rate = max_discharge_rate
+        if not 0 < efficiency <= 1:
+            raise ValueError("efficiency must be greater than 0 and at most 1")
         self.efficiency = efficiency
+        self.one_way_efficiency = np.sqrt(efficiency)
 
         self.stored_energy = capacity * 0.5 # start at 50% charge
 
     def can_charge(self, amount):
-        """Check if we can charge the storage by 'amount' MW"""
-        return self.stored_energy + amount <= self.capacity 
+        """Check if ``amount`` MW can be charged for one hour."""
+        return (
+            0 <= amount <= self.max_charge_rate
+            and amount * self.one_way_efficiency <= self.capacity - self.stored_energy
+        )
 
     def can_discharge(self, amount):
-        """Check if we can discharge the storage by 'amount' MW"""
-        return self.stored_energy - amount >= 0
+        """Check if ``amount`` MW can be discharged for one hour."""
+        return (
+            0 <= amount <= self.max_discharge_rate
+            and amount / self.one_way_efficiency <= self.stored_energy
+        )
 
     def charge(self, amount):
-        """Charge the storage by 'amount' MW"""
+        """Charge for one hour, returning whether the requested rate was accepted."""
         if self.can_charge(amount):
-            self.stored_energy += amount * self.efficiency
+            self.stored_energy += amount * self.one_way_efficiency
             return True
         return False
 
     def discharge(self, amount):
-        """Discharge the storage by 'amount' MW"""
+        """Discharge for one hour, returning whether the requested rate was accepted."""
         if self.can_discharge(amount):
-            self.stored_energy -= amount / self.efficiency
+            self.stored_energy -= amount / self.one_way_efficiency
             return True
         return False
 
